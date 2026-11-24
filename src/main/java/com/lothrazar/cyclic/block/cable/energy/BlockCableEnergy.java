@@ -3,14 +3,11 @@ package com.lothrazar.cyclic.block.cable.energy;
 import com.lothrazar.cyclic.block.cable.CableBase;
 import com.lothrazar.cyclic.block.cable.EnumConnectType;
 import com.lothrazar.cyclic.block.cable.ShapeCache;
+import com.lothrazar.cyclic.config.ConfigRegistry;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -22,7 +19,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.energy.CapabilityEnergy;
@@ -35,23 +31,13 @@ public class BlockCableEnergy extends CableBase {
   }
 
   @Override
-  public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-    if (world.isClientSide) {
-      BlockEntity ent = world.getBlockEntity(pos);
-      IEnergyStorage handlerHere = ent.getCapability(CapabilityEnergy.ENERGY, null).orElse(null);
-      //show current
-      if (handlerHere != null) {
-        int st = handlerHere.getEnergyStored();
-        if (st > 0) {
-          player.displayClientMessage(new TranslatableComponent(st + ""), true);
-        }
+  public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
+    if (ConfigRegistry.CABLE_FACADES.get()) {
+      VoxelShape facade = this.getFacadeShape(state, worldIn, pos, context);
+      if (facade != null) {
+        return facade;
       }
     }
-    return super.use(state, world, pos, player, hand, hit);
-  }
-
-  @Override
-  public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
     return ShapeCache.getOrCreate(state, CableBase::createShape);
   }
 
@@ -89,6 +75,7 @@ public class BlockCableEnergy extends CableBase {
     EnumProperty<EnumConnectType> property = FACING_TO_PROPERTY_MAP.get(facing);
     EnumConnectType oldProp = stateIn.getValue(property);
     if (oldProp.isBlocked() || oldProp.isExtraction()) {
+      //      updateConnection(world, currentPos, facing, oldProp);
       return stateIn;
     }
     if (isEnergy(stateIn, facing, facingState, world, currentPos, facingPos)) {

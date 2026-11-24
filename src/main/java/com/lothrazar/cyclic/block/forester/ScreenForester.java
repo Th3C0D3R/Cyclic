@@ -17,6 +17,7 @@ public class ScreenForester extends ScreenBase<ContainerForester> {
   private ButtonMachineField btnRedstone;
   private EnergyBar energy;
   private GuiSliderInteger size;
+  private GuiSliderInteger heightslider;
 
   public ScreenForester(ContainerForester screenContainer, Inventory inv, Component titleIn) {
     super(screenContainer, inv, titleIn);
@@ -26,21 +27,27 @@ public class ScreenForester extends ScreenBase<ContainerForester> {
   @Override
   public void init() {
     super.init();
-    int x, y;
+    int x = leftPos + 6;
+    int y = topPos + 6;
     energy.guiLeft = leftPos;
     energy.guiTop = topPos;
     energy.visible = TileForester.POWERCONF.get() > 0;
-    x = leftPos + 6;
-    y = topPos + 6;
-    btnRedstone = addRenderableWidget(new ButtonMachineField(x, y, TileForester.Fields.REDSTONE.ordinal(), menu.tile.getBlockPos()));
-    y += 20;
-    btnRender = addRenderableWidget(new ButtonMachineField(x, y, TileForester.Fields.RENDER.ordinal(),
+    final int w = 120;
+    final int h = 20;
+    int f = TileForester.Fields.REDSTONE.ordinal();
+    btnRedstone = addRenderableWidget(new ButtonMachineField(x, y, f, menu.tile.getBlockPos()));
+    y += h;
+    f = TileForester.Fields.RENDER.ordinal();
+    btnRender = addRenderableWidget(new ButtonMachineField(x, y, f,
         menu.tile.getBlockPos(), TextureEnum.RENDER_HIDE, TextureEnum.RENDER_SHOW, "gui.cyclic.render"));
-    int w = 110;
-    int h = 18;
-    int f = TileForester.Fields.SIZE.ordinal();
-    x += 28;
-    y += 20;
+    x = leftPos + 30;
+    y = topPos + 36;
+    f = TileForester.Fields.HEIGHT.ordinal();
+    heightslider = this.addRenderableWidget(new GuiSliderInteger(x, y, w, h, TileForester.Fields.HEIGHT.ordinal(), menu.tile.getBlockPos(),
+        0, TileForester.MAX_HEIGHT, menu.tile.getField(f)));
+    //
+    y += h + 4;
+    f = TileForester.Fields.SIZE.ordinal();
     size = this.addRenderableWidget(new GuiSliderInteger(x, y, w, h, f, menu.tile.getBlockPos(), 0, 10, menu.tile.getField(f)));
   }
 
@@ -58,6 +65,7 @@ public class ScreenForester extends ScreenBase<ContainerForester> {
     this.drawName(ms, this.title.getString());
     btnRedstone.onValueUpdate(menu.tile);
     btnRender.onValueUpdate(menu.tile);
+    heightslider.setTooltip("buildertype.height.tooltip");
     size.setTooltip("cyclic.screen.size" + menu.tile.getField(size.getField()));
   }
 
@@ -65,7 +73,14 @@ public class ScreenForester extends ScreenBase<ContainerForester> {
   protected void renderBg(PoseStack ms, float partialTicks, int mouseX, int mouseY) {
     this.drawBackground(ms, TextureRegistry.INVENTORY);
     int relX = this.getXSize() / 2 - 9;
-    this.drawSlot(ms, relX, 24, TextureRegistry.SLOT_SAPLING, Const.SQ);
     energy.draw(ms, menu.getEnergy());
+    int y = 16;
+    //
+    if (menu.tile.hasSapling()) {
+      this.drawSlot(ms, relX, y);
+    }
+    else {
+      this.drawSlot(ms, relX, y, TextureRegistry.SLOT_SAPLING, Const.SQ);
+    }
   }
 }

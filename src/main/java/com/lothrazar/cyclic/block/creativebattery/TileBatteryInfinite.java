@@ -1,14 +1,11 @@
 package com.lothrazar.cyclic.block.creativebattery;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
 import com.lothrazar.cyclic.registry.TileRegistry;
+import com.lothrazar.cyclic.util.UtilDirection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -24,7 +21,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 
 public class TileBatteryInfinite extends TileBlockEntityCyclic {
 
-  static final int MAX = 960000000;
+  static final int MAX = Integer.MAX_VALUE;
 
   static enum Fields {
     N, E, S, W, U, D;
@@ -105,13 +102,8 @@ public class TileBatteryInfinite extends TileBlockEntityCyclic {
     this.tickCableFlow();
   }
 
-  private List<Integer> rawList = IntStream.rangeClosed(
-      0, 5).boxed().collect(Collectors.toList());
-
   private void tickCableFlow() {
-    Collections.shuffle(rawList);
-    for (Integer i : rawList) {
-      Direction exportToSide = Direction.values()[i];
+    for (final Direction exportToSide : UtilDirection.getAllInDifferentOrder()) {
       if (this.poweredSides.get(exportToSide)) {
         moveEnergy(exportToSide, MAX / 4);
       }

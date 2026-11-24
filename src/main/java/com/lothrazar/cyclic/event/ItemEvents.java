@@ -1,11 +1,13 @@
 package com.lothrazar.cyclic.event;
 
+import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.api.IEntityInteractable;
 import com.lothrazar.cyclic.block.cable.CableBase;
+import com.lothrazar.cyclic.block.facade.IBlockFacade;
 import com.lothrazar.cyclic.block.scaffolding.ItemScaffolding;
 import com.lothrazar.cyclic.config.ConfigRegistry;
 import com.lothrazar.cyclic.data.DataTags;
-import com.lothrazar.cyclic.enchant.MultishotEnchant;
+import com.lothrazar.cyclic.enchant.MultiBowEnchant;
 import com.lothrazar.cyclic.item.SleepingMatItem;
 import com.lothrazar.cyclic.item.animal.ItemHorseEnder;
 import com.lothrazar.cyclic.item.bauble.CharmBase;
@@ -19,9 +21,11 @@ import com.lothrazar.cyclic.item.equipment.GlowingHelmetItem;
 import com.lothrazar.cyclic.item.equipment.ShieldCyclicItem;
 import com.lothrazar.cyclic.item.food.LoftyStatureApple;
 import com.lothrazar.cyclic.item.storagebag.ItemStorageBag;
+import com.lothrazar.cyclic.net.BlockFacadeMessage;
 import com.lothrazar.cyclic.registry.BlockRegistry;
 import com.lothrazar.cyclic.registry.EnchantRegistry;
 import com.lothrazar.cyclic.registry.ItemRegistry;
+import com.lothrazar.cyclic.registry.PacketRegistry;
 import com.lothrazar.cyclic.registry.PotionEffectRegistry;
 import com.lothrazar.cyclic.registry.SoundRegistry;
 import com.lothrazar.cyclic.util.AttributesUtil;
@@ -33,6 +37,8 @@ import com.lothrazar.cyclic.util.LevelWorldUtil;
 import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -50,13 +56,18 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -129,7 +140,7 @@ public class ItemEvents {
   @SubscribeEvent
   public void onArrowLooseEvent(ArrowLooseEvent event) {
     //this event is only used for multishot enchantment 
-    if (!MultishotEnchant.CFG.get()) {
+    if (!MultiBowEnchant.CFG.get()) {
       return;
     }
     ItemStack stackBow = event.getBow();
@@ -144,8 +155,8 @@ public class ItemEvents {
       Vec3 playerDirection = EntityUtil.lookVector(player.getYRot(), player.getXRot());
       Vec3 left = playerDirection.cross(new Vec3(0, 1, 0));
       Vec3 right = playerDirection.cross(new Vec3(0, -1, 0));
-      MultishotEnchant.spawnArrow(worldIn, player, stackBow, event.getCharge(), left.normalize());
-      MultishotEnchant.spawnArrow(worldIn, player, stackBow, event.getCharge(), right.normalize());
+      MultiBowEnchant.spawnArrow(worldIn, player, stackBow, event.getCharge(), left.normalize());
+      MultiBowEnchant.spawnArrow(worldIn, player, stackBow, event.getCharge(), right.normalize());
     }
   }
 
@@ -266,6 +277,7 @@ public class ItemEvents {
       }
       else if (src == DamageSource.LAVA || src == DamageSource.IN_FIRE || src == DamageSource.ON_FIRE) {
         this.damageFinder(event, player, ItemRegistry.CHARM_FIRE.get(), 0);
+        this.damageFinder(event, player, ItemRegistry.CHARM_ULTIMATE.get(), 0);
       }
     }
     else if (src.getEntity() instanceof Player) {
@@ -439,8 +451,10 @@ public class ItemEvents {
         //cyclic cable
         //test? maybe config disable? 
         player.swing(event.getHand());
-        event.getWorld().destroyBlock(event.getPos(), true);
+        CableBase.crouchClick(event, event.getWorld().getBlockState(event.getPos()));
+        //        event.getWorld().destroyBlock(event.getPos(), true);
         event.setCanceled(true);
+        SoundUtil.playSound(player, SoundRegistry.THUNK.get(), 0.2F, 1F);
       }
     }
   }
@@ -467,17 +481,28 @@ public class ItemEvents {
 
   @SubscribeEvent
   public void onHit(PlayerInteractEvent.LeftClickBlock event) {
+    //<<<<<<< HEAD
+    //    Player player = event.getPlayer();
+    //    ItemStack held = player.getItemInHand(event.getHand());
+    //    if (held.isEmpty()) {
+    //      return;
+    //    }
+    //    Level world = player.getCommandSenderWorld();
+    //=======
     Player player = event.getPlayer();
     ItemStack held = player.getItemInHand(event.getHand());
-    if (held.isEmpty()) {
-      return;
-    }
-    Level world = player.getCommandSenderWorld();
+    var world = player.getCommandSenderWorld();
+    BlockState target = world.getBlockState(event.getPos());
     ///////////// shape
     if (held.getItem() instanceof ShapeCard && player.isCrouching()) {
-      BlockState target = world.getBlockState(event.getPos());
       ShapeCard.setBlockState(held, target);
       ChatUtil.sendStatusMessage(player, target.getBlock().getDescriptionId());
+    }
+    if (player.isCrouching()
+        && target.getBlock() instanceof IBlockFacade) {
+      //
+      onHitFacadeHandler(event, player, held, target);
+      //
     }
     ///////////////// builders
     if (held.getItem() instanceof BuilderItem) {
@@ -489,7 +514,7 @@ public class ItemEvents {
       event.setCanceled(true);
       if (player.isCrouching()) {
         //pick out target block
-        BlockState target = world.getBlockState(event.getPos());
+        //        BlockState target = world.getBlockState(event.getPos());
         BuilderActionType.setBlockState(held, target);
         ChatUtil.sendStatusMessage(player, target.getBlock().getDescriptionId());
         event.setCanceled(true);
@@ -507,6 +532,46 @@ public class ItemEvents {
     }
     if (held.getItem() instanceof AntimatterEvaporatorWandItem) {
       AntimatterEvaporatorWandItem.toggleMode(player, held);
+    }
+  }
+
+  private void onHitFacadeHandler(PlayerInteractEvent.LeftClickBlock event, Player player, ItemStack held, BlockState target) {
+    if (held.isEmpty() && event.getWorld().isClientSide()) {
+      PacketRegistry.INSTANCE.sendToServer(new BlockFacadeMessage(event.getPos(), true));
+    }
+    else {
+      Block block = Block.byItem(held.getItem()); // getBlockFromItem
+      if (block == null || block == Blocks.AIR || block == target.getBlock()) {
+        return;
+      }
+      if (target.getBlock() instanceof CableBase) {
+        if (!ConfigRegistry.CABLE_FACADES.get()) {
+          return;
+        }
+      }
+      if (!ConfigRegistry.isFacadeAllowed(held)) {
+        ModCyclic.LOGGER.info("not allowed to use this item as a facade from config: " + held.getItem());
+        return;
+      }
+      if (event.getWorld().isClientSide()) {
+        onHitFacadeClient(event, player, held, block);
+      }
+    }
+    //cancel the event so creative players will not break it
+    event.setCanceled(true);
+  }
+
+  @OnlyIn(Dist.CLIENT)
+  private void onHitFacadeClient(PlayerInteractEvent.LeftClickBlock event, Player player, ItemStack held, Block block) {
+    //pick the block, write to tags, and send to server
+    boolean pickFluids = false;
+    double reach = player.getReachDistance();
+    HitResult bhr = player.pick(reach, 1, pickFluids); // BlockHitResult
+    if (bhr.getType() == HitResult.Type.BLOCK) {
+      BlockPlaceContext context = new BlockPlaceContext(player, event.getHand(), held, (BlockHitResult) bhr); // BlockItemUseContext
+      BlockState facadeState = block.getStateForPlacement(context);
+      CompoundTag tags = (facadeState == null) ? null : NbtUtils.writeBlockState(facadeState);
+      PacketRegistry.INSTANCE.sendToServer(new BlockFacadeMessage(event.getPos(), tags));
     }
   }
 

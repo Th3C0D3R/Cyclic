@@ -20,13 +20,13 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
@@ -43,6 +43,12 @@ public class FluidHelpers {
   public static final FluidRenderMap<Int2ObjectMap<Model3D>> CACHED_FLUIDS = new FluidRenderMap<>();
   public static final int STAGES = 1400;
 
+  /**
+   * maps fluid to colour hex code as int value. Used by itemstack durability bar on filled held tanks
+   * 
+   * @param fstack
+   * @return
+   */
   public static int getColorFromFluid(FluidStack fstack) {
     if (fstack != null && fstack.getFluid() != null) {
       //first check mine
@@ -64,17 +70,71 @@ public class FluidHelpers {
       else if (fstack.getFluid().getAttributes().getColor() > 0) {
         return fstack.getFluid().getAttributes().getColor();
       }
-      else if (fstack.getFluid() == ForgeMod.MILK.get()) {
-        return COLOUR_MILK;
-      }
-      else if (fstack.getFluid() == Fluids.LAVA) {
-        return COLOUR_LAVA;
-      }
+      return COLOUR_MILK;
+    }
+    else if (fstack.getFluid() == Fluids.LAVA) {
+      return COLOUR_LAVA;
     }
     return COLOUR_DEFAULT;
   }
 
+  /**
+   * Internally knows that water cauldrons fil to level 3, but lava cauldrons are a different block without the level property.
+   * 
+   * Ignores partially filled water cauldrons.
+   * 
+   * a full cauldron is 1000mb
+   * 
+   * @param level
+   * @param posTarget
+   *          where the cauldron exists
+   * @param tank
+   *          of myself that i want to extract frm for the target
+   * @return
+   */
+  public static boolean insertSourceCauldron(Level level, BlockPos posTarget, IFluidHandler tank) {
+    //for mc 1.16.5 cauldrons only allow water. lava cauldron added in 1.17 and levels blockstate removed
+    BlockState targetState = level.getBlockState(posTarget);
+    if (targetState.getBlock() == Blocks.CAULDRON) {
+      //cauldron is hardcoded mojang with two fluids
+      FluidStack simulate = tank.drain(new FluidStack(new FluidStack(Fluids.WATER, FluidAttributes.BUCKET_VOLUME), FluidAttributes.BUCKET_VOLUME), FluidAction.SIMULATE);
+      if (simulate.getAmount() == FluidAttributes.BUCKET_VOLUME) {
+        //we are able to fill the tank
+        if (level.setBlock(posTarget, Blocks.WATER_CAULDRON.defaultBlockState().setValue(LayeredCauldronBlock.LEVEL, 3), 3)) {
+          //we filled the cauldron, so now drain with execute
+          tank.drain(new FluidStack(new FluidStack(Fluids.WATER, FluidAttributes.BUCKET_VOLUME), FluidAttributes.BUCKET_VOLUME), FluidAction.EXECUTE);
+          return true;
+        }
+      }
+      //try the same thing with lava
+      simulate = tank.drain(new FluidStack(new FluidStack(Fluids.LAVA, FluidAttributes.BUCKET_VOLUME), FluidAttributes.BUCKET_VOLUME), FluidAction.SIMULATE);
+      if (simulate.getAmount() == FluidAttributes.BUCKET_VOLUME) {
+        //we are able to fill the tank
+        if (level.setBlock(posTarget, Blocks.LAVA_CAULDRON.defaultBlockState(), 3)) {
+          //we filled the cauldron, so now drain with execute
+          tank.drain(new FluidStack(new FluidStack(Fluids.LAVA, FluidAttributes.BUCKET_VOLUME), FluidAttributes.BUCKET_VOLUME), FluidAction.EXECUTE);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Internally knows that water cauldrons fil to level 3, but lava cauldrons are a different block without the level property.
+   * 
+   * Ignores partially filled water cauldrons.
+   * 
+   * a full cauldron is 1000mb
+   * 
+   * @param level
+   * @param posTarget
+   * @param tank
+   */
   public static void extractSourceWaterloggedCauldron(Level level, BlockPos posTarget, IFluidHandler tank) {
+    if (tank == null) {
+      return;
+    }
     //fills always gonna be one bucket but we dont know what type yet
     //test if its a source block, or a waterlogged block
     BlockState targetState = level.getBlockState(posTarget);
@@ -87,7 +147,7 @@ public class FluidHelpers {
         tank.fill(new FluidStack(Fluids.WATER, FluidAttributes.BUCKET_VOLUME), FluidAction.EXECUTE);
       }
     }
-    else if (targetState.getBlock() == Blocks.WATER_CAULDRON) {
+    else if (targetState.getBlock() == Blocks.WATER_CAULDRON && targetState.getValue(LayeredCauldronBlock.LEVEL) >= 3) {
       int simFill = tank.fill(new FluidStack(new FluidStack(Fluids.WATER, FluidAttributes.BUCKET_VOLUME), FluidAttributes.BUCKET_VOLUME), FluidAction.SIMULATE);
       if (simFill == FluidAttributes.BUCKET_VOLUME
           && level.setBlockAndUpdate(posTarget, Blocks.CAULDRON.defaultBlockState())) {
@@ -120,13 +180,10 @@ public class FluidHelpers {
    * @return
    */
   public static TextureAtlasSprite getBaseFluidTexture(Fluid fluid, FluidType type) {
-    ResourceLocation spriteLocation;
-    if (type == FluidType.STILL) {
-      spriteLocation = fluid.getAttributes().getStillTexture();
-    }
-    else {
-      spriteLocation = fluid.getAttributes().getFlowingTexture();
-    }
+    final FluidAttributes fluidAttributes = fluid.getAttributes();
+    final ResourceLocation spriteLocation = (type == FluidType.STILL)
+        ? fluidAttributes.getStillTexture()
+        : fluidAttributes.getFlowingTexture();
     return getSprite(spriteLocation);
   }
 
@@ -143,12 +200,11 @@ public class FluidHelpers {
     if (fluid.getFluid().getAttributes().getStillTexture(fluid) != null) {
       double sideSpacing = 0.00625;
       double belowSpacing = 0.0625 / 4;
-      double topSpacing = belowSpacing;
       model.minX = sideSpacing;
       model.minY = belowSpacing;
       model.minZ = sideSpacing;
       model.maxX = 1 - sideSpacing;
-      model.maxY = 1 - topSpacing;
+      model.maxY = 1 - belowSpacing;
       model.maxZ = 1 - sideSpacing;
     }
     if (CACHED_FLUIDS.containsKey(fluid)) {
@@ -180,31 +236,29 @@ public class FluidHelpers {
   }
 
   public static boolean tryFillPositionFromTank(Level world, BlockPos posSide, Direction sideOpp, IFluidHandler tankFrom, final int amount) {
-    if (tankFrom == null) {
+    if (tankFrom == null || amount <= 0) {
       return false;
     }
     try {
       IFluidHandler fluidTo = FluidUtil.getFluidHandler(world, posSide, sideOpp).orElse(null);
-      if (fluidTo != null) {
-        //its not my facing dir
-        // SO: pull fluid from that into myself
-        FluidStack wasDrained = tankFrom.drain(amount, FluidAction.SIMULATE);
-        if (wasDrained == null) {
-          return false;
-        }
-        int filled = fluidTo.fill(wasDrained, FluidAction.SIMULATE);
-        if (wasDrained != null && wasDrained.getAmount() > 0
-            && filled > 0) {
-          int realAmt = Math.min(filled, wasDrained.getAmount());
-          wasDrained = tankFrom.drain(realAmt, FluidAction.EXECUTE);
-          if (wasDrained == null) {
-            return false;
-          }
-          int actuallyFilled = fluidTo.fill(wasDrained, FluidAction.EXECUTE);
-          return actuallyFilled > 0;
-        }
+      if (fluidTo == null) {
+        return false;
       }
-      return false;
+      FluidStack toBeDrained = tankFrom.drain(amount, FluidAction.SIMULATE);
+      if (toBeDrained == null || toBeDrained.isEmpty()) {
+        return false;
+      }
+      final int filledAmount = fluidTo.fill(toBeDrained, FluidAction.EXECUTE);
+      if (filledAmount <= 0) {
+        return false;
+      }
+      final FluidStack drained = tankFrom.drain(filledAmount, FluidAction.EXECUTE);
+      final int drainedAmount = drained.getAmount();
+      //sanity check
+      if (filledAmount != drainedAmount) {
+        ModCyclic.LOGGER.error("Imbalance filling fluids, filled " + filledAmount + " drained " + drainedAmount);
+      }
+      return true;
     }
     catch (Exception e) {
       ModCyclic.LOGGER.error("A fluid tank had an issue when we tried to fill", e);

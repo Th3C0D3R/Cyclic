@@ -14,11 +14,14 @@ import com.lothrazar.cyclic.block.detectoritem.RenderDetectorItem;
 import com.lothrazar.cyclic.block.dropper.RenderDropper;
 import com.lothrazar.cyclic.block.enderitemshelf.ItemShelfRenderer;
 import com.lothrazar.cyclic.block.endershelf.EnderShelfRenderer;
+import com.lothrazar.cyclic.block.facade.RenderCableFacade;
+import com.lothrazar.cyclic.block.facade.light.RenderLightFacade;
+import com.lothrazar.cyclic.block.facade.soundmuff.SoundmuffRenderFacade;
+import com.lothrazar.cyclic.block.fan.RenderFan;
 import com.lothrazar.cyclic.block.fishing.RenderFisher;
 import com.lothrazar.cyclic.block.forester.RenderForester;
 import com.lothrazar.cyclic.block.harvester.RenderHarvester;
 import com.lothrazar.cyclic.block.laser.RenderLaser;
-import com.lothrazar.cyclic.block.lightcompr.RenderLightCamo;
 import com.lothrazar.cyclic.block.melter.RenderMelter;
 import com.lothrazar.cyclic.block.miner.RenderMiner;
 import com.lothrazar.cyclic.block.peatfarm.RenderPeatFarm;
@@ -26,7 +29,6 @@ import com.lothrazar.cyclic.block.screen.RenderScreentext;
 import com.lothrazar.cyclic.block.shapebuilder.RenderStructure;
 import com.lothrazar.cyclic.block.shapedata.RenderShapedata;
 import com.lothrazar.cyclic.block.solidifier.RenderSolidifier;
-import com.lothrazar.cyclic.block.soundmuff.ghost.SoundmuffRender;
 import com.lothrazar.cyclic.block.sprinkler.RenderSprinkler;
 import com.lothrazar.cyclic.block.tank.RenderTank;
 import com.lothrazar.cyclic.block.wireless.redstone.RenderTransmit;
@@ -34,6 +36,7 @@ import com.lothrazar.cyclic.event.ClientInputEvents;
 import com.lothrazar.cyclic.event.EventRender;
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
 import com.lothrazar.cyclic.item.equipment.ShieldCyclicItem;
+import com.lothrazar.cyclic.item.lunchbox.ItemLunchbox;
 import com.lothrazar.cyclic.item.magicnet.EntityMagicNetEmpty;
 import com.lothrazar.cyclic.item.storagebag.ItemStorageBag;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -99,24 +102,29 @@ public class ClientRegistryCyclic {
     event.registerBlockEntityRenderer(TileRegistry.DETECTOR_ITEM.get(), RenderDetectorItem::new);
     event.registerBlockEntityRenderer(TileRegistry.DROPPER.get(), RenderDropper::new);
     event.registerBlockEntityRenderer(TileRegistry.ENDER_ITEM_SHELF.get(), ItemShelfRenderer::new);
+    event.registerBlockEntityRenderer(TileRegistry.FAN.get(), RenderFan::new);
     event.registerBlockEntityRenderer(TileRegistry.ENDER_SHELF.get(), EnderShelfRenderer::new);
     event.registerBlockEntityRenderer(TileRegistry.FISHER.get(), RenderFisher::new);
     event.registerBlockEntityRenderer(TileRegistry.FORESTER.get(), RenderForester::new);
     event.registerBlockEntityRenderer(TileRegistry.HARVESTER.get(), RenderHarvester::new);
     event.registerBlockEntityRenderer(TileRegistry.LASER.get(), RenderLaser::new);
-    event.registerBlockEntityRenderer(TileRegistry.LIGHT_CAMO.get(), RenderLightCamo::new);
+    event.registerBlockEntityRenderer(TileRegistry.LIGHT_CAMO.get(), RenderLightFacade::new);
     event.registerBlockEntityRenderer(TileRegistry.MELTER.get(), RenderMelter::new);
     event.registerBlockEntityRenderer(TileRegistry.MINER.get(), RenderMiner::new);
     event.registerBlockEntityRenderer(TileRegistry.SCREEN.get(), RenderScreentext::new);
     event.registerBlockEntityRenderer(TileRegistry.COMPUTER_SHAPE.get(), RenderShapedata::new);
     event.registerBlockEntityRenderer(TileRegistry.SOLIDIFIER.get(), RenderSolidifier::new);
-    event.registerBlockEntityRenderer(TileRegistry.SOUNDPROOFING_GHOST.get(), SoundmuffRender::new);
+    event.registerBlockEntityRenderer(TileRegistry.SOUNDPROOFING_GHOST.get(), SoundmuffRenderFacade::new);
     event.registerBlockEntityRenderer(TileRegistry.SPRINKLER.get(), RenderSprinkler::new);
     event.registerBlockEntityRenderer(TileRegistry.TANK.get(), RenderTank::new);
     event.registerBlockEntityRenderer(TileRegistry.WIRELESS_TRANSMITTER.get(), RenderTransmit::new);
     event.registerBlockEntityRenderer(TileRegistry.BEACON.get(), RenderBeaconPotion::new);
     event.registerBlockEntityRenderer(TileRegistry.ANTI_BEACON.get(), RenderBeaconAnti::new);
     event.registerBlockEntityRenderer(TileRegistry.BEACON_REDSTONE.get(), RenderBeaconRedstone::new);
+    //cable renderers
+    event.registerBlockEntityRenderer(TileRegistry.ENERGY_PIPE.get(), RenderCableFacade::new);
+    event.registerBlockEntityRenderer(TileRegistry.ITEM_PIPE.get(), RenderCableFacade::new);
+    event.registerBlockEntityRenderer(TileRegistry.FLUID_PIPE.get(), RenderCableFacade::new);
   }
 
   public static void setupClient(final FMLClientSetupEvent event) {
@@ -158,6 +166,7 @@ public class ClientRegistryCyclic {
     ItemBlockRenderTypes.setRenderLayer(BlockRegistry.NETHERITE_LANTERN.get(), RenderType.cutoutMipped());
     ItemBlockRenderTypes.setRenderLayer(BlockRegistry.GOLD_SOUL_LANTERN.get(), RenderType.cutoutMipped());
     ItemBlockRenderTypes.setRenderLayer(BlockRegistry.COPPER_SOUL_LANTERN.get(), RenderType.cutoutMipped());
+    ItemBlockRenderTypes.setRenderLayer(BlockRegistry.GENERATOR_SOLAR.get(), RenderType.cutoutMipped());
   }
 
   private static void initKeybindings() {
@@ -181,6 +190,15 @@ public class ClientRegistryCyclic {
   @OnlyIn(Dist.CLIENT)
   private static void initColours() {
     Minecraft.getInstance().getItemColors().register((stack, tintIndex) -> {
+      if (stack.getItem() == ItemRegistry.LUNCHBOX.get()) {
+        // ok
+        if (tintIndex == 0) { //layer zero is outline, ignore this 
+          return 0xFFFFFFFF;
+        }
+        //layer 1 is overlay  
+        int c = ItemLunchbox.getColour(stack);
+        return c;
+      }
       if (stack.getItem() == ItemRegistry.STORAGE_BAG.get()) {
         // ok
         if (tintIndex == 0) { //layer zero is outline, ignore this 
@@ -203,7 +221,7 @@ public class ClientRegistryCyclic {
         }
       }
       return -1;
-    }, ItemRegistry.MOB_CONTAINER.get(), ItemRegistry.STORAGE_BAG.get());
+    }, ItemRegistry.MOB_CONTAINER.get(), ItemRegistry.STORAGE_BAG.get(), ItemRegistry.LUNCHBOX.get());
   }
 
   @OnlyIn(Dist.CLIENT)

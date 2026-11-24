@@ -5,6 +5,7 @@ import com.lothrazar.cyclic.block.anvil.ContainerAnvil;
 import com.lothrazar.cyclic.block.anvilmagma.ContainerAnvilMagma;
 import com.lothrazar.cyclic.block.anvilvoid.ContainerAnvilVoid;
 import com.lothrazar.cyclic.block.battery.ContainerBattery;
+import com.lothrazar.cyclic.block.batteryclay.ContainerClayBattery;
 import com.lothrazar.cyclic.block.beaconpotion.ContainerPotion;
 import com.lothrazar.cyclic.block.breaker.ContainerBreaker;
 import com.lothrazar.cyclic.block.cable.fluid.ContainerCableFluid;
@@ -28,6 +29,7 @@ import com.lothrazar.cyclic.block.generatorfluid.ContainerGeneratorFluid;
 import com.lothrazar.cyclic.block.generatorfood.ContainerGeneratorFood;
 import com.lothrazar.cyclic.block.generatorfuel.ContainerGeneratorFuel;
 import com.lothrazar.cyclic.block.generatoritem.ContainerGeneratorDrops;
+import com.lothrazar.cyclic.block.generatorsolar.ContainerGeneratorSolar;
 import com.lothrazar.cyclic.block.harvester.ContainerHarvester;
 import com.lothrazar.cyclic.block.laser.ContainerLaser;
 import com.lothrazar.cyclic.block.melter.ContainerMelter;
@@ -69,6 +71,7 @@ public class MenuTypeRegistry {
   public static final RegistryObject<MenuType<ContainerItemCollector>> COLLECTOR = CONTAINERS.register("collector", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerItemCollector(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerPeatFarm>> PEAT_FARM = CONTAINERS.register("peat_farm", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerPeatFarm(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerBattery>> BATTERY = CONTAINERS.register("battery", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerBattery(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
+  public static final RegistryObject<MenuType<ContainerClayBattery>> BATTERY_CLAY = CONTAINERS.register("battery_clay", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerClayBattery(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerHarvester>> HARVESTER = CONTAINERS.register("harvester", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerHarvester(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerAnvil>> ANVIL = CONTAINERS.register("anvil", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerAnvil(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerPlacer>> PLACER = CONTAINERS.register("placer", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerPlacer(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
@@ -110,6 +113,7 @@ public class MenuTypeRegistry {
   public static final RegistryObject<MenuType<ContainerGeneratorFood>> GENERATOR_FOOD = CONTAINERS.register("generator_food", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerGeneratorFood(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerGeneratorDrops>> GENERATOR_DROPS = CONTAINERS.register("generator_item", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerGeneratorDrops(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerGeneratorFluid>> GENERATOR_FLUID = CONTAINERS.register("generator_fluid", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerGeneratorFluid(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
+  public static final RegistryObject<MenuType<ContainerGeneratorSolar>> GENERATOR_SOLAR = CONTAINERS.register("generator_solar", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerGeneratorSolar(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerPackager>> PACKAGER = CONTAINERS.register("packager", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerPackager(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerSoundRecorder>> SOUND_RECORDER = CONTAINERS.register("sound_recorder", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerSoundRecorder(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerSoundPlayer>> SOUND_PLAYER = CONTAINERS.register("sound_player", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerSoundPlayer(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
@@ -117,9 +121,9 @@ public class MenuTypeRegistry {
   public static final RegistryObject<MenuType<ContainerTeleport>> TELEPORT = CONTAINERS.register("teleport", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerTeleport(windowId, inv.player.level, data.readBlockPos(), inv, inv.player)));
   //  Items with containers
   public static final RegistryObject<MenuType<EnderBookContainer>> ENDER_BOOK = CONTAINERS.register("ender_book", () -> IForgeMenuType.create((windowId, inv, data) -> new EnderBookContainer(windowId, inv, inv.player)));
-  public static final RegistryObject<MenuType<ContainerStorageBag>> STORAGE_BAG = CONTAINERS.register("storage_bag", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerStorageBag(windowId, inv, inv.player)));
-  public static final RegistryObject<MenuType<CraftingBagContainer>> CRAFTING_BAG = CONTAINERS.register("crafting_bag", () -> IForgeMenuType.create((windowId, inv, data) -> new CraftingBagContainer(windowId, inv, inv.player)));
-  public static final RegistryObject<MenuType<CraftingStickContainer>> CRAFTING_STICK = CONTAINERS.register("crafting_stick", () -> IForgeMenuType.create((windowId, inv, data) -> new CraftingStickContainer(windowId, inv, inv.player, null)));
+  public static final RegistryObject<MenuType<ContainerStorageBag>> STORAGE_BAG = CONTAINERS.register("storage_bag", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerStorageBag(windowId, inv, inv.player, data.readInt())));
+  public static final RegistryObject<MenuType<CraftingBagContainer>> CRAFTING_BAG = CONTAINERS.register("crafting_bag", () -> IForgeMenuType.create((windowId, inv, data) -> new CraftingBagContainer(windowId, inv, inv.player, data.readInt())));
+  public static final RegistryObject<MenuType<CraftingStickContainer>> CRAFTING_STICK = CONTAINERS.register("crafting_stick", () -> IForgeMenuType.create((windowId, inv, data) -> new CraftingStickContainer(windowId, inv, inv.player, data.readInt())));
   public static final RegistryObject<MenuType<ContainerFilterCard>> FILTER_DATA = CONTAINERS.register("filter_data", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerFilterCard(windowId, inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerCake>> INVENTORY_CAKE = CONTAINERS.register("inventory_cake", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerCake(windowId, inv, inv.player)));
   public static final RegistryObject<MenuType<ContainerLunchbox>> LUNCHBOX = CONTAINERS.register("lunchbox", () -> IForgeMenuType.create((windowId, inv, data) -> new ContainerLunchbox(windowId, inv, inv.player)));

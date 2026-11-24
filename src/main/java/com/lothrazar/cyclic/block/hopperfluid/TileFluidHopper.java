@@ -72,7 +72,12 @@ public class TileFluidHopper extends TileBlockEntityCyclic {
     //then pull from hopper facey side
     Direction exportToSide = this.getBlockState().getValue(BlockFluidHopper.FACING);
     if (exportToSide != null && exportToSide != Direction.UP) {
+      //if the target is a tank
       moveFluids(exportToSide, worldPosition.relative(exportToSide), FLOW, tank);
+      //if the target is a cauldron
+      FluidHelpers.insertSourceCauldron(level, worldPosition.relative(exportToSide), tank);
+      this.updateComparatorOutputLevel();
+      this.updateComparatorOutputLevelAt(worldPosition.relative(exportToSide));
     }
   }
 
@@ -84,11 +89,14 @@ public class TileFluidHopper extends TileBlockEntityCyclic {
     IFluidHandler tankAbove = FluidHelpers.getTank(level, target, Direction.DOWN);
     boolean success = FluidHelpers.tryFillPositionFromTank(level, worldPosition, Direction.UP, tankAbove, FLOW);
     if (success) {
+      this.updateComparatorOutputLevelAt(target);
+      this.updateComparatorOutputLevel();
       return;
     }
     //try from the world
     if (tank.getSpace() >= FluidAttributes.BUCKET_VOLUME) {
       FluidHelpers.extractSourceWaterloggedCauldron(level, target, tank);
+      this.updateComparatorOutputLevel();
     }
   }
 

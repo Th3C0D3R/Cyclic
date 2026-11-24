@@ -8,8 +8,8 @@
       "text": "item.cyclic.fireball.guide"
     },
     {
-      "type": "crafting",
-      "recipe": "cyclic:fireball"
+      "type": "smelting",
+      "recipe": "cyclic:smelting/fireball"
     }
   ]
 }

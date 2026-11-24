@@ -29,9 +29,13 @@ public class BlockFluidHopper extends BlockCyclic {
   }
 
   @Override
-  public void registerClient() {
-    //    RenderTypeLookup.setRenderLayer(this, RenderType.getTranslucent());
-    //    ClientRegistry.bindTileEntityRenderer(TileRegistry.FLUIDHOPPER.get(), RenderHopperFluid::new);
+  public boolean hasAnalogOutputSignal(BlockState bs) {
+    return true;
+  }
+
+  @Override
+  public int getAnalogOutputSignal(BlockState st, Level level, BlockPos pos) {
+    return calcRedstoneFromFluid(level.getBlockEntity(pos));
   }
 
   @Override

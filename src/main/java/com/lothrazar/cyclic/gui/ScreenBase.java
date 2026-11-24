@@ -3,11 +3,13 @@ package com.lothrazar.cyclic.gui;
 import java.util.List;
 import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.api.IHasTooltip;
+import com.lothrazar.cyclic.data.Const;
 import com.lothrazar.cyclic.registry.TextureRegistry;
 import com.lothrazar.cyclic.util.ChatUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -24,7 +26,6 @@ public abstract class ScreenBase<T extends AbstractContainerMenu> extends Abstra
   }
 
   protected void drawBackground(PoseStack ms, ResourceLocation gui) {
-    //    this.minecraft.getTextureManager().bind(gui);
     RenderSystem.setShader(GameRenderer::getPositionTexShader);
     RenderSystem.setShaderTexture(0, gui);
     int relX = (this.width - this.imageWidth) / 2;
@@ -56,18 +57,17 @@ public abstract class ScreenBase<T extends AbstractContainerMenu> extends Abstra
   }
 
   protected void drawSlot(PoseStack ms, int x, int y, ResourceLocation texture) {
-    drawSlot(ms, x, y, texture, 18);
+    drawSlot(ms, x, y, texture, Const.SQ);
   }
 
   protected void drawSlot(PoseStack ms, int x, int y, ResourceLocation texture, int size) {
-    //    this.minecraft.getTextureManager().bind(texture);
     RenderSystem.setShader(GameRenderer::getPositionTexShader);
     RenderSystem.setShaderTexture(0, texture);
     blit(ms, leftPos + x, topPos + y, 0, 0, size, size, size, size);
   }
 
   protected void drawSlot(PoseStack ms, int x, int y) {
-    drawSlot(ms, x, y, TextureRegistry.SLOT, 18);
+    drawSlot(ms, x, y, TextureRegistry.SLOT, Const.SQ);
   }
 
   protected void drawSlotLarge(PoseStack ms, int x, int y) {
@@ -109,5 +109,18 @@ public abstract class ScreenBase<T extends AbstractContainerMenu> extends Abstra
         }
       }
     }
+  }
+
+  /**
+   * Propogate mouse drag events down to slider widgets
+   */
+  @Override
+  public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+    for (GuiEventListener btn : this.children()) {
+      if (btn.isMouseOver(mouseX, mouseY) && btn instanceof AbstractSliderButton) {
+        ((AbstractSliderButton) btn).mouseDragged(mouseX, mouseY, button, dragX, dragY);
+      }
+    }
+    return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
   }
 }

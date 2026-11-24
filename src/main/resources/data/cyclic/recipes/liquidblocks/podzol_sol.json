@@ -1,8 +1,8 @@
 {
   "type": "cyclic:solidifier",
-  "inputTop": {
+  	"ingredients": [ {
     "item": "minecraft:dirt"
-  },
+  }],
   "mix": {
     "fluid": "liquidblocks:liquid_podzol",
     "count": 1000
@@ -11,6 +11,10 @@
     "item": "minecraft:podzol",
 	  "count": 2
   },
+	"energy": {
+		"rfpertick": 80,
+		"ticks": 60
+	},
 	"conditions": [
 		{
 			"values": [

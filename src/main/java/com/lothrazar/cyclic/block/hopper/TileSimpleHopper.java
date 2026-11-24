@@ -2,7 +2,6 @@ package com.lothrazar.cyclic.block.hopper;
 
 import java.util.List;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.block.hopperfluid.BlockFluidHopper;
 import com.lothrazar.cyclic.block.hoppergold.TileGoldHopper;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
@@ -15,8 +14,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.Hopper;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -66,28 +65,19 @@ public class TileSimpleHopper extends TileBlockEntityCyclic implements Hopper {
     //no cooldown unlike mojang hopper
     this.tryPullFromWorld(worldPosition.relative(Direction.UP));
     this.tryExtract(inventory, Direction.UP, getFlow(), null);
-    Direction exportToSide = this.getBlockState().getValue(BlockFluidHopper.FACING);
+    Direction exportToSide = this.getBlockState().getValue(BlockSimpleHopper.FACING);
     //is it a composter
     this.moveItemToCompost(exportToSide, inventory);
     this.moveItems(exportToSide, getFlow(), inventory);
+    updateComparatorOutputLevel();
   }
 
   public int getFlow() {
     return 1;
   }
 
-  private int getRadius() {
-    return 1;
-  }
-
   private void tryPullFromWorld(BlockPos center) {
-    int radius = getRadius();
-    AABB aabb = new AABB(
-        center.getX() - radius, center.getY(), center.getZ() - radius,
-        center.getX() + radius + 1, center.getY(), center.getZ() + radius + 1);
-    List<ItemEntity> list = level.getEntitiesOfClass(ItemEntity.class, aabb, (entity) -> {
-      return entity.isAlive() && !entity.getItem().isEmpty(); //  && entity.getXpValue() > 0;//entity != null && entity.getHorizontalFacing() == facing;
-    });
+    List<ItemEntity> list = HopperBlockEntity.getItemsAtAndAbove(level, this);
     if (list.size() > 0) {
       ItemEntity stackEntity = list.get(level.random.nextInt(list.size()));
       ItemStack remainder = stackEntity.getItem();
@@ -96,6 +86,7 @@ public class TileSimpleHopper extends TileBlockEntityCyclic implements Hopper {
       if (remainder.isEmpty()) {
         stackEntity.remove(Entity.RemovalReason.KILLED);
       }
+      updateComparatorOutputLevel();
     }
   }
 

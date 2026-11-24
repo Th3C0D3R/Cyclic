@@ -4,7 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.config.ConfigRegistry;
 import com.lothrazar.cyclic.data.BlockPosDim;
+import com.lothrazar.cyclic.data.PreviewOutlineType;
 import com.lothrazar.cyclic.item.datacard.LocationGpsCard;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import com.lothrazar.cyclic.util.LevelWorldUtil;
@@ -114,17 +116,19 @@ public class TileWirelessEnergy extends TileBlockEntityCyclic implements MenuPro
     Set<BlockPosDim> used = new HashSet<>();
     for (int slot = 0; slot < gpsSlots.getSlots(); slot++) {
       BlockPosDim loc = getTargetInSlot(slot);
-      if (used.contains(loc)) {
+      if (loc == null || used.contains(loc)) {
         continue;
       }
-      if (loc != null && LevelWorldUtil.dimensionIsEqual(loc, level)) {
-        if (moveEnergy(loc.getSide(), loc.getPos(), transferRate)) {
-          used.add(loc);
-          moved = true;
-        }
+      if (LevelWorldUtil.dimensionIsEqual(loc, level)) {
+        // assume position is in the same level/dimension/world
+        moved = moveEnergy(loc.getSide(), loc.getPos(), transferRate);
       }
+      else if (ConfigRegistry.TRANSFER_NODES_DIMENSIONAL.get()) {
+        //allows config to disable this cross dimension feature for modpack balance purposes
+        moved = moveEnergyDimensional(loc, transferRate);
+      }
+      this.setLitProperty(moved);
     }
-    this.setLitProperty(moved);
   }
 
   BlockPosDim getTargetInSlot(int s) {
@@ -138,7 +142,7 @@ public class TileWirelessEnergy extends TileBlockEntityCyclic implements MenuPro
         this.needsRedstone = value % 2;
       break;
       case RENDER:
-        this.render = value % 2;
+        this.render = value % PreviewOutlineType.values().length;
       break;
       case TRANSFER_RATE:
         //        transferRate = value;

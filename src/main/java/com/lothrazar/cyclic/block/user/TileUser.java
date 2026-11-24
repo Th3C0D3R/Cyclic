@@ -51,7 +51,7 @@ public class TileUser extends TileBlockEntityCyclic implements MenuProvider {
   private LazyOptional<IItemHandler> inventoryCap = LazyOptional.of(() -> inventory);
   private WeakReference<FakePlayer> fakePlayer;
   private int timerDelay = 20;
-  boolean doHitBreak = false;
+  boolean doHitBreak = false; // was useLeftHand
   boolean entities = false;
 
   public TileUser(BlockPos pos, BlockState state) {
@@ -101,13 +101,13 @@ public class TileUser extends TileBlockEntityCyclic implements MenuProvider {
       var cooldowns = fakePlayer.get().getCooldowns();
       TileBlockEntityCyclic.tryEquipItem(inventoryCap, fakePlayer, 0, InteractionHand.MAIN_HAND);
       var item = fakePlayer.get().getItemInHand(InteractionHand.MAIN_HAND).getItem();
+      var oldItem = item.asItem();
       if (cooldowns.isOnCooldown(item)) {
         cooldowns.removeCooldown(item);
       }
       BlockPos target = this.worldPosition.relative(this.getCurrentFacing());
       if (entities) {
         //do entities
-        ModCyclic.LOGGER.info(this.worldPosition + "entities ");
         this.interactEntities(target);
       }
       else {
@@ -119,29 +119,53 @@ public class TileUser extends TileBlockEntityCyclic implements MenuProvider {
           TileBlockEntityCyclic.interactUseOnBlock(fakePlayer, level, target, InteractionHand.MAIN_HAND, null);
         }
       }
+      boolean mainhandChanged = oldItem != userSlots.getStackInSlot(0).getItem();
+      if (mainhandChanged) {
+        this.depositOutputMainhand();
+      }
       TileBlockEntityCyclic.syncEquippedItem(this.userSlots, fakePlayer, 0, InteractionHand.MAIN_HAND);
     }
     catch (Exception e) {
       ModCyclic.LOGGER.error("User action item error", e);
     }
-    tryDumpFakePlayerInvo(fakePlayer, this.outputSlots, true);
+    final boolean dropItemsOnGround = false;
+    tryDumpFakePlayerInvo(fakePlayer, this.outputSlots, dropItemsOnGround);
+  }
+
+  private void depositOutputMainhand() {
+    var usedItem = fakePlayer.get().getItemInHand(InteractionHand.MAIN_HAND);
+    for (int slotId = 0; slotId < outputSlots.getSlots(); slotId++) {
+      if (!usedItem.isEmpty()) {
+        if (outputSlots.insertItem(slotId, usedItem.copy(), true).isEmpty()) {
+          usedItem = outputSlots.insertItem(slotId, usedItem.copy(), false);
+          TileBlockEntityCyclic.tryEquipItem(usedItem, fakePlayer, InteractionHand.MAIN_HAND);
+        }
+      }
+    }
   }
 
   private void interactEntities(BlockPos target) {
+    AABB ab = getEntityRange(target);
+    this.level.getEntities(fakePlayer.get(), ab, EntitySelector.NO_SPECTATORS).forEach((entityFound) -> {
+      //      ModCyclic.LOGGER.info(worldPosition + "| ??   " + fakePlayer.get().getMainHandItem());
+      if (doHitBreak) {
+        fakePlayer.get().attack(entityFound);
+        //        ModCyclic.LOGGER.info(worldPosition + "| interactEntities ATTACK  " + e);
+      }
+      else { // interact 
+        InteractionResult res = fakePlayer.get().interactOn(entityFound, InteractionHand.MAIN_HAND);
+        if (res.consumesAction()) {
+          ModCyclic.LOGGER.info(worldPosition + "| entity consume result detected " + res);
+        }
+      }
+    });
+  }
+
+  private AABB getEntityRange(BlockPos target) {
     final int r = 1; // TODO radius controls in GUI
     AABB ab = new AABB(target.getX() + r, target.getY(), target.getZ() + r,
         target.getX() - r, target.getY() + 1, target.getZ() - r);
-    this.level.getEntities(fakePlayer.get(), ab, EntitySelector.NO_SPECTATORS).forEach((e) -> {
-      //      ModCyclic.LOGGER.info(worldPosition + "| ??   " + fakePlayer.get().getMainHandItem());
-      if (doHitBreak) {
-        fakePlayer.get().attack(e);
-        ModCyclic.LOGGER.info(worldPosition + "| interactEntities ATTACK  " + e);
-      }
-      else { // interact
-        InteractionResult res = fakePlayer.get().interactOn(e, InteractionHand.MAIN_HAND);
-        ModCyclic.LOGGER.info(worldPosition + "| interactEntities result " + res);
-      }
-    });
+    return ab;
   }
 
   @Override
@@ -159,7 +183,7 @@ public class TileUser extends TileBlockEntityCyclic implements MenuProvider {
       case RENDER:
         this.render = value % 2;
       break;
-      case INTERACTTYPE:
+      case INTERACTTYPE: // was LEFTHAND
         this.doHitBreak = value == 1;
       break;
       case ENTITIES:
@@ -199,7 +223,7 @@ public class TileUser extends TileBlockEntityCyclic implements MenuProvider {
     if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
       return inventoryCap.cast();
     }
-    if (cap == CapabilityEnergy.ENERGY) {
+    if (POWERCONF.get() > 0 && cap == CapabilityEnergy.ENERGY) {
       return energyCap.cast();
     }
     return super.getCapability(cap, side);

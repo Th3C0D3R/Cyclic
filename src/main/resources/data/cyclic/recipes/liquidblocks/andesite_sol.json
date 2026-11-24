@@ -1,16 +1,22 @@
 {
-  "type": "cyclic:solidifier",
-  "inputTop": {
-    "tag": "forge:stone"
-  },
-  "mix": {
-    "fluid": "liquidblocks:liquid_andesite",
-    "count": 1000
-  },
-  "result": {
-    "item": "minecraft:andesite",
-	  "count": 2
-  },
+	"type": "cyclic:solidifier",
+	"ingredients": [
+		{
+			"tag": "forge:stone"
+		}
+	],
+	"mix": {
+		"fluid": "liquidblocks:liquid_andesite",
+		"count": 1000
+	},
+	"result": {
+		"item": "minecraft:andesite",
+		"count": 2
+	},
+	"energy": {
+		"rfpertick": 80,
+		"ticks": 60
+	},
 	"conditions": [
 		{
 			"values": [

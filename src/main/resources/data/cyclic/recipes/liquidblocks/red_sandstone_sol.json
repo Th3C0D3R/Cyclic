@@ -1,8 +1,8 @@
 {
   "type": "cyclic:solidifier",
-  "inputTop": {
+  	"ingredients": [ {
     "tag": "forge:sand"
-  },
+  }],
   "mix": {
     "fluid": "liquidblocks:liquid_red_sandstone",
     "count": 1000
@@ -11,6 +11,10 @@
     "item": "minecraft:red_sandstone",
 	  "count": 2
   },
+	"energy": {
+		"rfpertick": 80,
+		"ticks": 60
+	},
 	"conditions": [
 		{
 			"values": [

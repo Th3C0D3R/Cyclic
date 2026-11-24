@@ -3,7 +3,6 @@ package com.lothrazar.cyclic.util;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -36,15 +35,6 @@ public class ItemStackUtil {
       return new ItemStack(head);
     }
     return ItemStack.EMPTY;
-  }
-
-  public static void dropAll(IItemHandler items, Level world, BlockPos pos) {
-    if (items == null) {
-      return;
-    }
-    for (int i = 0; i < items.getSlots(); i++) {
-      Containers.dropItemStack(world, pos.getX(), pos.getY(), pos.getZ(), items.getStackInSlot(i));
-    }
   }
 
   public static void repairItem(ItemStack s) {
@@ -81,9 +71,7 @@ public class ItemStackUtil {
   }
 
   public static void drop(Level world, BlockPos pos, Block drop) {
-    if (!world.isClientSide) {
-      world.addFreshEntity(new ItemEntity(world, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(drop.asItem())));
-    }
+    drop(world, pos, new ItemStack(drop.asItem()));
   }
 
   public static void drop(Level world, BlockPos pos, ItemStack drop) {
@@ -117,9 +105,8 @@ public class ItemStackUtil {
     if (world.isClientSide == false) {
       ItemEntity entityItem = new ItemEntity(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
       // do not spawn a second 'ghost' one onclient side
-      world.addFreshEntity(entityItem);
       entityItem.setDeltaMovement(0, 0, 0);
-      //      entityItem.motionX = entityItem.motionY = entityItem.motionZ = 0;
+      world.addFreshEntity(entityItem);
     }
   }
 

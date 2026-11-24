@@ -2,6 +2,7 @@ package com.lothrazar.cyclic.item.storagebag;
 
 import com.lothrazar.cyclic.data.Const;
 import com.lothrazar.cyclic.gui.ContainerBase;
+import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.registry.MenuTypeRegistry;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -17,28 +18,17 @@ public class ContainerStorageBag extends ContainerBase {
   public int slot;
   public int slotCount;
 
-  public ContainerStorageBag(int i, Inventory playerInventory, Player player) {
+  public ContainerStorageBag(int i, Inventory playerInventory, Player player, int slot) {
     super(MenuTypeRegistry.STORAGE_BAG.get(), i);
-    if (player.getMainHandItem().getItem() instanceof ItemStorageBag) {
-      this.bag = player.getMainHandItem();
-      this.slot = player.getInventory().selected;
-    }
-    else if (player.getOffhandItem().getItem() instanceof ItemStorageBag) {
-      this.bag = player.getOffhandItem();
-      this.slot = 40;
-    }
-    else {
-      for (int x = 0; x < playerInventory.getContainerSize(); x++) {
-        ItemStack stack = playerInventory.getItem(x);
-        if (stack.getItem() instanceof ItemStorageBag) {
-          bag = stack;
-          slot = x;
-          break;
-        }
-      }
-    }
+    this.slot = slot;
     this.playerEntity = player;
     this.playerInventory = playerInventory;
+    if (slot > -1) {
+      this.bag = playerInventory.getItem(slot);
+    }
+    if (bag.isEmpty()) {
+      this.bag = super.findBag(ItemRegistry.STORAGE_BAG.get());
+    }
     bag.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(h -> {
       this.slotCount = h.getSlots();
       this.endInv = h.getSlots();

@@ -1,8 +1,8 @@
 {
   "type": "cyclic:solidifier",
-  "inputTop": {
+  	"ingredients": [ {
     "item": "minecraft:gravel"
-  },
+  }],
   "mix": {
     "fluid": "liquidblocks:liquid_gravel",
     "count": 1000
@@ -11,6 +11,10 @@
     "item": "minecraft:gravel",
 	  "count": 4
   },
+	"energy": {
+		"rfpertick": 80,
+		"ticks": 60
+	},
 	"conditions": [
 		{
 			"values": [

@@ -2,7 +2,9 @@ package com.lothrazar.cyclic.block.wireless.fluid;
 
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.capabilities.block.FluidTankBase;
+import com.lothrazar.cyclic.config.ConfigRegistry;
 import com.lothrazar.cyclic.data.BlockPosDim;
+import com.lothrazar.cyclic.data.PreviewOutlineType;
 import com.lothrazar.cyclic.item.datacard.LocationGpsCard;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import com.lothrazar.cyclic.util.LevelWorldUtil;
@@ -129,8 +131,13 @@ public class TileWirelessFluid extends TileBlockEntityCyclic implements MenuProv
     boolean moved = false;
     //run the transfer. one slot only
     BlockPosDim loc = getTargetInSlot(0);
-    if (loc != null && LevelWorldUtil.dimensionIsEqual(loc, level)) {
-      this.moveFluids(loc.getSide(), loc.getPos(), this.transferRate, tank);
+    if (loc != null) {
+      if (LevelWorldUtil.dimensionIsEqual(loc, level)) {
+        this.moveFluids(loc.getSide(), loc.getPos(), this.transferRate, tank);
+      }
+      else if (ConfigRegistry.TRANSFER_NODES_DIMENSIONAL.get()) {
+        this.moveFluidsDimensional(loc, this.transferRate, tank);
+      }
     }
     this.setLitProperty(moved);
   }
@@ -146,7 +153,7 @@ public class TileWirelessFluid extends TileBlockEntityCyclic implements MenuProv
         this.needsRedstone = value % 2;
       break;
       case RENDER:
-        this.render = value % 2;
+        this.render = value % PreviewOutlineType.values().length;
       break;
       case TRANSFER_RATE:
         transferRate = value;

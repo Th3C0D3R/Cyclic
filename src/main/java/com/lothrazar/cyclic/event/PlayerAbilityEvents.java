@@ -15,7 +15,6 @@ public class PlayerAbilityEvents {
     if (event.getEntityLiving() instanceof Player player) {
       FireballItem.tickHoldingFireball(player);
       CyclicFile datFile = PlayerDataEvents.getOrCreate(player);
-      tickFlying(player, datFile);
       tickSpec(player, datFile);
     }
   }
@@ -32,21 +31,5 @@ public class PlayerAbilityEvents {
       player.noPhysics = false;
     }
     datFile.spectatorTicks--;
-  }
-
-  private void tickFlying(Player player, CyclicFile datFile) {
-    if (datFile.flyTicks <= 0) {
-      datFile.flyTicks = 0;
-      return;
-    }
-    if (datFile.flyTicks > DISABLE_OFFSET) {
-      player.getAbilities().mayfly = true;
-    }
-    else if (datFile.flyTicks <= DISABLE_OFFSET) {
-      player.getAbilities().mayfly = false;
-      player.getAbilities().flying = false;
-      player.fallDistance = 0.0F;
-    }
-    datFile.flyTicks--;
   }
 }

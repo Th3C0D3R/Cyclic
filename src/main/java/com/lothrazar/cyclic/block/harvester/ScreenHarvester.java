@@ -15,8 +15,8 @@ public class ScreenHarvester extends ScreenBase<ContainerHarvester> {
   private EnergyBar energy;
   private ButtonMachineField btnRedstone;
   private ButtonMachineField btnRender;
-  private GuiSliderInteger size;
   private ButtonMachineField btnDirection;
+  private GuiSliderInteger size;
   private GuiSliderInteger heightslider;
 
   public ScreenHarvester(ContainerHarvester screenContainer, Inventory inv, Component titleIn) {
@@ -27,37 +27,33 @@ public class ScreenHarvester extends ScreenBase<ContainerHarvester> {
   @Override
   public void init() {
     super.init();
-    int x, y;
     energy.guiLeft = leftPos;
     energy.guiTop = topPos;
     energy.visible = TileHarvester.POWERCONF.get() > 0;
-    x = leftPos + 6;
-    y = topPos + 6;
-    btnRedstone = addRenderableWidget(new ButtonMachineField(x, y, TileHarvester.Fields.REDSTONE.ordinal(), menu.tile.getBlockPos()));
+    int x = leftPos + 6;
+    int y = topPos + 6;
+    final int w = 120;
+    final int h = 20;
+    int f = TileHarvester.Fields.REDSTONE.ordinal();
+    btnRedstone = addRenderableWidget(new ButtonMachineField(x, y, f, menu.tile.getBlockPos()));
     y += 20;
-    btnRender = addRenderableWidget(new ButtonMachineField(x, y, TileHarvester.Fields.RENDER.ordinal(),
+    f = TileHarvester.Fields.RENDER.ordinal();
+    btnRender = addRenderableWidget(new ButtonMachineField(x, y, f,
         menu.tile.getBlockPos(), TextureEnum.RENDER_HIDE, TextureEnum.RENDER_SHOW, "gui.cyclic.render"));
     //
-    int f = TileHarvester.Fields.DIRECTION.ordinal();
-    y += 20;
+    y += h;
+    f = TileHarvester.Fields.DIRECTION.ordinal();
     btnDirection = addRenderableWidget(new ButtonMachineField(x, y, f,
-        menu.tile.getBlockPos(), TextureEnum.DIR_DOWN, TextureEnum.DIR_UPWARDS, "gui.cyclic.direction"))
-    //.setSize(18)
-    ;
-    int w = 110;
-    int h = 18;
+        menu.tile.getBlockPos(), TextureEnum.DIR_DOWN, TextureEnum.DIR_UPWARDS, "gui.cyclic.direction"));
     //now start sliders
     //
-    y = topPos + 22;
-    x = leftPos + 34;
+    x = leftPos + 30;
+    y = topPos + 26;
     f = TileHarvester.Fields.HEIGHT.ordinal();
-    heightslider = this.addRenderableWidget(new GuiSliderInteger(x, y, w, h, TileHarvester.Fields.HEIGHT.ordinal(), menu.tile.getBlockPos(),
-        0, TileHarvester.MAX_HEIGHT, menu.tile.getField(f)));
+    heightslider = this.addRenderableWidget(new GuiSliderInteger(x, y, w, h, f, menu.tile.getBlockPos(), 0, TileHarvester.MAX_HEIGHT, menu.tile.getField(f)));
     heightslider.setTooltip("buildertype.height.tooltip");
-    //     w = 130;
-    //    int h = 18;
+    y += h + 4;
     f = TileHarvester.Fields.SIZE.ordinal();
-    y += 26;
     size = this.addRenderableWidget(new GuiSliderInteger(x, y, w, h, f, menu.tile.getBlockPos(), 0, TileHarvester.MAX_SIZE, menu.tile.getField(f)));
   }
 
@@ -74,9 +70,11 @@ public class ScreenHarvester extends ScreenBase<ContainerHarvester> {
     btnRedstone.onValueUpdate(menu.tile);
     btnRender.onValueUpdate(menu.tile);
     btnDirection.onValueUpdate(menu.tile);
+    heightslider.setTooltip("buildertype.height.tooltip");
     size.setTooltip("cyclic.screen.size" + menu.tile.getField(size.getField()));
     this.drawButtonTooltips(ms, mouseX, mouseY);
     this.drawName(ms, title.getString());
+    btnDirection.visible = !menu.tile.getBlockStateVertical();
   }
 
   @Override

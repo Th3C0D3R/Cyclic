@@ -12,6 +12,7 @@ public class TextureRegistry {
   public static final ResourceLocation INVENTORY_PLAIN = new ResourceLocation(ModCyclic.MODID, "textures/gui/inventory_plain.png");
   public static final ResourceLocation INVENTORY_LARGE = new ResourceLocation(ModCyclic.MODID, "textures/gui/inventory_large.png");
   public static final ResourceLocation INVENTORY_LARGE_PLAIN = new ResourceLocation(ModCyclic.MODID, "textures/gui/inventory_large_plain.png");
+  public static final ResourceLocation INVENTORY_MEDIUM = new ResourceLocation(ModCyclic.MODID, "textures/gui/inventory_medium.png"); // 176x214
   public static final ResourceLocation INVENTORY_SOUND = new ResourceLocation(ModCyclic.MODID, "textures/gui/inventory_sound.png");
   public static final ResourceLocation SLOT = new ResourceLocation(ModCyclic.MODID, "textures/gui/slot.png");
   public static final ResourceLocation SLOT_CHARGE = new ResourceLocation(ModCyclic.MODID, "textures/gui/slot_charge.png");
@@ -36,6 +37,7 @@ public class TextureRegistry {
   public static final ResourceLocation LAVA_PROG = new ResourceLocation(ModCyclic.MODID, "textures/gui/lava_prog.png");
   public static final ResourceLocation ARROW = new ResourceLocation(ModCyclic.MODID, "textures/gui/arrow.png");
   public static final ResourceLocation SAW = new ResourceLocation(ModCyclic.MODID, "textures/gui/saw.png");
+  public final static ResourceLocation BEAM = new ResourceLocation(ModCyclic.MODID, "textures/effects/beam.png");
   public static final int COLOUR_RF_BAR = 0xBA0909;
   public static final int COLOUR_FOOD_BAR = 0xCFFF04;
 }
